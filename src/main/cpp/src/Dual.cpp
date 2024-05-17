@@ -141,7 +141,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_caveman_dual_DualApplication_analyzeAudi
         dynamicComplexity->output("loudness").set(loudness);
         dynamicComplexity->compute();
 
-        spectralContrast->input("signal").set(audio);
+        spectralContrast->input("spectrum").set(audio);
         spectralContrast->output("spectralContrast").set(spectralContrastValues);
         spectralContrast->compute();
 

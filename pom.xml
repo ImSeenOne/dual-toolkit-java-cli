@@ -55,31 +55,42 @@
       <plugin>
         <groupId>com.github.maven-nar</groupId>
         <artifactId>nar-maven-plugin</artifactId>
-        <version>3.5.2</version>
-        <extensions>true</extensions>
         <configuration>
-          <libraries>
-            <library>
-              <type>shared</type>
-              <narSystemPackage>com.caveman.dual</narSystemPackage>
-            </library>
-          </libraries>
           <cpp>
-            <includePaths>
-              <includePath>/usr/local/include/eigen-3-4-0</includePath>  <!-- Eigen headers -->
-              <includePath>/usr/local/include/essentia</includePath> <!-- Essentia headers -->
-            </includePaths>
-          </cpp>
-          <linker>
             <name>g++</name>
-            <libraries>
-              <library>
-                <name>essentia</name>
-                <type>shared</type>
-                <directory>/usr/local/lib</directory>
-              </library>
-              <!-- Add other necessary libraries here -->
-            </libraries>
+            <includes>
+              <include>**/*.cpp</include>
+            </includes>
+            <options>
+              <option>-shared</option>
+              <option>-fPIC</option>
+              <option>-o</option>
+              <option>build/libDual.so</option>
+              <option>src/Dual.cpp</option>
+              <option>-D__int64=int64_t</option>
+              <option>-I${JAVA_HOME}/include</option>
+              <option>-I${JAVA_HOME}/include/linux</option>
+              <option>-I/usr/local/lib/essentia</option>
+              <option>-I/usr/local/include/include-java-lib</option>
+              <option>-I/usr/local/lib/eigen-3.4.0</option>
+                   -lavutil -lswresample -ltag
+              <option>-lessentia</option>
+              <option>-lfftw3</option>
+              <option>-lyaml</option>
+              <option>-lavcodec</option>
+              <option>-lavformat</option>
+              <option>-lavutil</option>
+              <option>-lswresample</option>
+              <option>-ltag</option>
+            </options>
+          </cpp>
+
+          <linker>
+            <name>gcc</name>
+            <options>
+              <option>${architecture.option}</option>
+              <option>${subsystem.option}</option>
+            </options>
           </linker>
         </configuration>
       </plugin>
