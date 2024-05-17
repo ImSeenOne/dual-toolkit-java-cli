@@ -1,0 +1,88 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.caveman.dual</groupId>
+  <artifactId>dual-toolkit</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <name>Archetype - dual-sw</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+  </properties>
+
+  <dependencies>
+    <!-- Lombok for easier logging with @Slf4j annotation -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.20</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- SLF4J API -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.30</version>
+    </dependency>
+
+    <!-- Logback Classic Implementation -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.4.12</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <configuration>
+          <mainClass>com.caveman.dual.DualApplication</mainClass>
+          <systemProperties>
+            <systemProperty>
+              <key>java.library.path</key>
+              <value>/usr/local/lib</value>
+            </systemProperty>
+          </systemProperties>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.github.maven-nar</groupId>
+        <artifactId>nar-maven-plugin</artifactId>
+        <version>3.5.2</version>
+        <extensions>true</extensions>
+        <configuration>
+          <libraries>
+            <library>
+              <type>shared</type>
+              <narSystemPackage>com.caveman.dual</narSystemPackage>
+            </library>
+          </libraries>
+          <cpp>
+            <includePaths>
+              <includePath>/usr/local/include/eigen-3-4-0</includePath>  <!-- Eigen headers -->
+              <includePath>/usr/local/include/essentia</includePath> <!-- Essentia headers -->
+            </includePaths>
+          </cpp>
+          <linker>
+            <name>g++</name>
+            <libraries>
+              <library>
+                <name>essentia</name>
+                <type>shared</type>
+                <directory>/usr/local/lib</directory>
+              </library>
+              <!-- Add other necessary libraries here -->
+            </libraries>
+          </linker>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
