@@ -34,155 +34,85 @@
       <artifactId>logback-classic</artifactId>
       <version>1.4.12</version>
     </dependency>
-
-    <!-- The following dependency is needed to automatically load the native libs from .nar files.
-            This makes running NativeApp.java directly from within NetBeans work.
-            Fixes issue 1,      https://github.com/jjYBdx4IL/example-maven-project-setups/issues/1
-
-            Update: this is already done by jna.
-       -->
-    <dependency>
-      <groupId>org.scijava</groupId>
-      <artifactId>native-lib-loader</artifactId>
-      <version>2.1.3</version>
-    </dependency>
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>**/*.so</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.8</version>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <mkdir dir="src/main/resources/lib"/>
+                <exec executable="g++">
+                  <arg value="-shared"/>
+                  <arg value="-fPIC"/>
+                  <arg value="-o"/>
+                  <arg value="src/main/resources/lib/libDual.so"/>
+                  <arg value="src/main/cpp/src/Dual.cpp"/>
+                  <arg value="-I${env.JAVA_HOME}/include"/>
+                  <arg value="-I${env.JAVA_HOME}/include/linux"/>
+                  <arg value="-I/usr/local/include/essentia"/>
+                  <arg value="-I/usr/local/include/include-java-lib"/>
+                  <arg value="-I/usr/local/include/eigen-3-4-0"/>
+                  <arg value="-lessentia"/>
+                  <arg value="-lfftw3"/>
+                  <arg value="-lyaml"/>
+                  <arg value="-lavcodec"/>
+                  <arg value="-lavformat"/>
+                  <arg value="-lavutil"/>
+                  <arg value="-lswresample"/>
+                  <arg value="-ltag"/>
+                </exec>
+                <exec executable="cat">
+                  <arg value="src/main/cpp/src/Dual.cpp"/>
+                </exec>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.0.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>java</goal>
+            </goals>
+          </execution>
+        </executions>
         <configuration>
           <mainClass>com.caveman.dual.DualApplication</mainClass>
           <systemProperties>
             <systemProperty>
-              <key>java.library.path</key>
-              <value>/usr/local/lib</value>
+              <java.library.path>${project.basedir}/src/main/resources/lib</java.library.path>
             </systemProperty>
           </systemProperties>
+          <arguments>
+            <argument>-Djava.library.path=${project.basedir}/src/main/resources/lib</argument>
+          </arguments>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>com.github.maven-nar</groupId>
-        <artifactId>nar-maven-plugin</artifactId>
-        <version>3.5.2</version>
-        <extensions>true</extensions>
-        <configuration>
-          <libraries>
-            <library>
-              <type>jni</type>
-              <narSystemPackage>com.caveman.dual.DualApplication</narSystemPackage>
-            </library>
-          </libraries>
-          <cpp>
-            <includes>
-              <include>src/main/cpp/**/*.cpp</include>
-            </includes>
-            <options>
-              <option>-shared</option>
-              <option>-fPIC</option>
-              <option>-I${JAVA_HOME}/include</option>
-              <option>-I${JAVA_HOME}/include/linux</option>
-              <option>-I/usr/local/lib/essentia</option>
-              <option>-I/usr/local/include/include-java-lib</option>
-              <option>-I/usr/local/lib/eigen-3.4.0</option>
-            </options>
-          </cpp>
-          <linker>
-            <name>g++</name>
-            <options>
-              <option>-L/usr/local/lib</option>
-              <type>shared</type>
-            </options>
-            <libs>
-              <lib>
-                <name>essentia</name>
-                <type>shared</type>
-              </lib>
-              <lib>
-                <name>fftw3</name>
-                <type>shared</type>
-              </lib>
-              <lib>
-                <name>yaml</name>
-                <type>shared</type>
-              </lib>
-              <lib>
-                <name>avcodec</name>
-                <type>shared</type>
-              </lib>
-              <lib>
-                <name>avformat</name>
-                <type>shared</type>
-              </lib>
-              <lib>
-                <name>avutil</name>
-                <type>shared</type>
-              </lib>
-              <lib>
-                <name>swresample</name>
-                <type>shared</type>
-              </lib>
-              <lib>
-                <name>tag</name>
-                <type>shared</type>
-              </lib>
-            </libs>
-          </linker>
-        </configuration>
-        <executions>
-          <execution>
-            <id>nar-compile</id>
-            <goals>
-              <goal>nar-compile</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>nar-testCompile</id>
-            <goals>
-              <goal>nar-testCompile</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>nar-package</id>
-            <goals>
-              <goal>nar-package</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>nar-test</id>
-            <goals>
-              <goal>nar-test</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
 
-  <profiles>
-    <profile>
-      <id>run-with-nar</id>
-      <properties>
-        <nar.library.path>${project.build.directory}</nar.library.path>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>3.0.0</version>
-            <configuration>
-              <mainClass>com.caveman.dual.DualApplication</mainClass>
-              <arguments>
-                <argument>-Djava.library.path=${nar.library.path}</argument>
-              </arguments>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
+
 </project>

@@ -119,8 +119,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_caveman_dual_DualApplication_analyzeAudi
         keyExtractor->output("strength").set(strength);
         keyExtractor->compute();
 
-        cout << "c++ output: Extracted Key: " << key << endl;
-        cout << "c++ output: Extracted Scale: " << scale << endl;
+        cout << "C++ output: Extracted Key: " << key << endl;
+        cout << "C++ output: Extracted Scale: " << scale << endl;
 
         string camelotCode = getCamelotCode(key, scale);
 
@@ -141,9 +141,25 @@ JNIEXPORT jobjectArray JNICALL Java_com_caveman_dual_DualApplication_analyzeAudi
         dynamicComplexity->output("loudness").set(loudness);
         dynamicComplexity->compute();
 
-        spectralContrast->input("spectrum").set(audio);
+        frameCutter->input("signal").set(audio);
+        frameCutter->output("frame").set(frame);
+
+        windowing->input("frame").set(frame);
+        windowing->output("frame").set(windowedFrame);
+
+        spectrum->input("frame").set(windowedFrame);
+        spectrum->output("spectrum").set(spectrumFrame);
+
+        spectralContrast->input("spectrum").set(spectrumFrame);
         spectralContrast->output("spectralContrast").set(spectralContrastValues);
-        spectralContrast->compute();
+
+        while (true) {
+            frameCutter->compute();
+            if (frame.empty()) break;
+            windowing->compute();
+            spectrum->compute();
+            spectralContrast->compute();
+        }
 
         // Clean up
         delete audioLoader;
@@ -151,6 +167,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_caveman_dual_DualApplication_analyzeAudi
         delete keyExtractor;
         delete levelExtractor;
         delete dynamicComplexity;
+        delete frameCutter;
+        delete windowing;
+        delete spectrum;
         delete spectralContrast;
 
         // Format the results as strings
