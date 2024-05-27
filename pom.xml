@@ -66,7 +66,7 @@
             <configuration>
               <target>
                 <mkdir dir="src/main/resources/lib"/>
-                <exec executable="g++">
+                <exec executable="g++" failonerror="true" resultproperty="compile.exit.code">
                   <arg value="-shared"/>
                   <arg value="-fPIC"/>
                   <arg value="-o"/>
@@ -86,9 +86,8 @@
                   <arg value="-lswresample"/>
                   <arg value="-ltag"/>
                 </exec>
-                <exec executable="cat">
-                  <arg value="src/main/cpp/src/Dual.cpp"/>
-                </exec>
+                <echo message="Compilation return code: ${compile.exit.code}"/>
+                <fail if="${compile.exit.code} != 0" message="Compilation failed with return code: ${compile.exit.code}"/>
               </target>
             </configuration>
           </execution>
