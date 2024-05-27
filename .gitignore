@@ -44,5 +44,5 @@ build/
 *.wav
 ### Compiled Binaries ###
 
-*.dll
-*.so
+**.dll
+**.so
