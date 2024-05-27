@@ -42,3 +42,7 @@ build/
 *.aiff
 *.mp3
 *.wav
+### Compiled Binaries ###
+
+*.dll
+*.so
