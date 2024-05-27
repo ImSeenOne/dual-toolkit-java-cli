@@ -1,14 +1,21 @@
 package com.caveman.dual;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+
 public class DualApplication {
 
+    private static final Logger log = LoggerFactory.getLogger(DualApplication.class);
+
     static {
-        try {
-            System.loadLibrary("Dual"); // Correct way to load the library
+        try { // Correct way to load the library
+            System.loadLibrary("Dual");
         } catch (UnsatisfiedLinkError e) {
-            System.out.println("Failed to load library: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Failed to load library: {}", e.getMessage());
+            log.error(Arrays.toString(e.getStackTrace()));
         }
     }
 
@@ -17,16 +24,19 @@ public class DualApplication {
     public native String[] analyzeAudio(String audioPath, String profile);
 
     public static void main(String[] args) {
+
+
         DualApplication analyzer = new DualApplication();
         analyzer.initEssentia();
         String profile = "edma";
         String[] features = analyzer.analyzeAudio("autonomous.aiff", profile);
         if (features != null) {
-            System.out.println("BPM: " + features[0]);
-            System.out.println("Camelot Code: " + features[1]);
-            System.out.println("Average Energy Level: " + features[2]);
+            log.debug("BPM: {}", features[0]);
+            log.debug("Camelot Code: {}", features[1]);
+            log.debug("Average Energy Level: {}", features[2]);
         } else {
-            System.out.println("Failed to analyze the audio.");
+            log.error("Failed to analyze the audio.");
+            log.error("Shutting down...");
         }
         analyzer.shutdownEssentia();
     }
