@@ -39,9 +39,9 @@ build/
 .DS_Store
 
 ### test music ###
-*.aiff
-*.mp3
-*.wav
+**.aiff
+**.mp3
+**.wav
 ### Compiled Binaries ###
 
 **.dll
