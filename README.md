@@ -66,14 +66,21 @@ sudo apt-get install -y build-essential libfftw3-dev libavcodec-dev libavformat-
    ```bash
    mvn clean install
    ```
-
-2. **Run the Java Application:**
-   Execute your Java application that loads the JNI library:
+   
+2. **Build classpath:**
+   You are gonna have to know where to get the resources when you compile it, to achieve this, run:
    ```bash
-   mvn exec:java
+   mvn dependency:build-classpath -Dmdep.outputFile=classpath.txt
+   ```
+   to build your whole classpath for the java project.
+
+3. **Run the Java Application:**
+   Execute Dual Toolkit:
+   ```bash
+   mvn exec:java # TODO: FIX THIS, NOT WORKING PROPERLY
    ```
    OR
    ```bash
-   java -Djava.library.path=/usr/local/lib -jar target/your-application.jar
+   java -Djava.library.path=src/main/resources/lib -cp target/classes:$(cat classpath.txt) -verbose:class com.caveman.dual.DualApplication
    ```
    
