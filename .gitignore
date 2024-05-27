@@ -38,10 +38,11 @@ build/
 ### Mac OS ###
 .DS_Store
 
-### test music ###
+### test and development files ###
 **.aiff
 **.mp3
 **.wav
+classpath.txt
 
 ### Compiled Binaries ###
 src/main/resources/lib/*.so
