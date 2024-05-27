@@ -5,6 +5,7 @@
 #include "essentia/algorithm.h"
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 using namespace essentia;
 using namespace essentia::standard;
@@ -61,6 +62,8 @@ std::string getCamelotCode(const std::string& key, const std::string& scale) {
     return "Unknown";
 }
 
+
+
 extern "C" {
 
 JNIEXPORT void JNICALL Java_com_caveman_dual_DualApplication_initEssentia(JNIEnv *env, jclass cls) {
@@ -74,11 +77,11 @@ JNIEXPORT void JNICALL Java_com_caveman_dual_DualApplication_shutdownEssentia(JN
 JNIEXPORT jobjectArray JNICALL Java_com_caveman_dual_DualApplication_analyzeAudio(JNIEnv *env, jclass cls, jstring audioPath, jstring stringProfileType) {
     const char* nativeAudioPath = env->GetStringUTFChars(audioPath, nullptr);
     const char* profileTypeChars = env->GetStringUTFChars(stringProfileType, nullptr);
-        
+
     if (!nativeAudioPath || !profileTypeChars) return nullptr;
 
     string profileType(profileTypeChars);
-    
+
     try {
         // Setup the algorithms needed for BPM, key, and energy extraction
         AlgorithmFactory& factory = AlgorithmFactory::instance();
@@ -86,9 +89,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_caveman_dual_DualApplication_analyzeAudi
         Algorithm* rhythmExtractor = factory.create("RhythmExtractor2013", "method", "multifeature");
         Algorithm* keyExtractor = factory.create("KeyExtractor", "profileType", profileType);
         Algorithm* levelExtractor = factory.create("LevelExtractor");
-        Algorithm* dynamicComplexity = factory.create("DynamicComplexity");
-        Algorithm* spectralContrast = factory.create("SpectralContrast");
-        
+        Algorithm* loudnessEBUR128 = factory.create("LoudnessEBUR128");
+        Algorithm* replayGain = factory.create("ReplayGain");
 
         vector<Real> audio;
         audioLoader->output("audio").set(audio);
@@ -132,45 +134,49 @@ JNIEXPORT jobjectArray JNICALL Java_com_caveman_dual_DualApplication_analyzeAudi
 
         Real averageLevel = computeAverageEnergy(levels);
 
-        // Song structure analysis
-        Real dynamicComplexityValue, loudness;
-        vector<Real> spectralContrastValues;
+        // Prepare stereo sample buffers
+        size_t numSamples = audio.size() / 2;
+        vector<StereoSample> stereoSamples(numSamples);
 
-        dynamicComplexity->input("signal").set(audio);
-        dynamicComplexity->output("dynamicComplexity").set(dynamicComplexityValue);
-        dynamicComplexity->output("loudness").set(loudness);
-        dynamicComplexity->compute();
-
-        frameCutter->input("signal").set(audio);
-        frameCutter->output("frame").set(frame);
-
-        windowing->input("frame").set(frame);
-        windowing->output("frame").set(windowedFrame);
-
-        spectrum->input("frame").set(windowedFrame);
-        spectrum->output("spectrum").set(spectrumFrame);
-
-        spectralContrast->input("spectrum").set(spectrumFrame);
-        spectralContrast->output("spectralContrast").set(spectralContrastValues);
-
-        while (true) {
-            frameCutter->compute();
-            if (frame.empty()) break;
-            windowing->compute();
-            spectrum->compute();
-            spectralContrast->compute();
+        for (size_t i = 0; i < numSamples; ++i) {
+            stereoSamples[i].left() = audio[2 * i];
+            stereoSamples[i].right() = audio[2 * i + 1];
         }
+
+        // TODO: Loudness computation using stereo signal
+        loudnessEBUR128->input("signal").set(stereoSamples);
+
+        // Variables to hold the results
+        Real integratedLoudness;
+        Real loudnessRange;
+        vector<Real> momentaryLoudness;
+        vector<Real> shortTermLoudness;
+        loudnessEBUR128->output("integratedLoudness").set(integratedLoudness);
+        loudnessEBUR128->output("loudnessRange").set(loudnessRange);
+        loudnessEBUR128->output("momentaryLoudness").set(momentaryLoudness);
+        loudnessEBUR128->output("shortTermLoudness").set(shortTermLoudness);
+
+        // Compute the loudness
+        loudnessEBUR128->compute();
+
+        // Loudness computation using ReplayGain
+        Real replayGainValue;
+        replayGain->input("signal").set(audio);
+        replayGain->output("replayGain").set(replayGainValue);
+        replayGain->compute();
+
+        // Print the results
+        cout << "C++ output: Integrated Loudness (EBUR128): " << integratedLoudness << " LUFS" << endl;
+        cout << "C++ output: Loudness Range (EBUR128): " << loudnessRange << " LU" << endl;
+        cout << "C++ output: ReplayGain: " << replayGainValue << " dB" << endl;
 
         // Clean up
         delete audioLoader;
         delete rhythmExtractor;
         delete keyExtractor;
         delete levelExtractor;
-        delete dynamicComplexity;
-        delete frameCutter;
-        delete windowing;
-        delete spectrum;
-        delete spectralContrast;
+        delete loudnessEBUR128;
+        delete replayGain;
 
         // Format the results as strings
         char bpmStr[50];
@@ -181,14 +187,17 @@ JNIEXPORT jobjectArray JNICALL Java_com_caveman_dual_DualApplication_analyzeAudi
         // Create string array to return
         jobjectArray result = env->NewObjectArray(3, env->FindClass("java/lang/String"), nullptr);
         env->SetObjectArrayElement(result, 0, env->NewStringUTF(bpmStr));
-        env->SetObjectArrayElement(result, 1, env->NewStringUTF(levelStr));
-        env->SetObjectArrayElement(result, 2, env->NewStringUTF(camelotCode.c_str()));
+        env->SetObjectArrayElement(result, 1, env->NewStringUTF(camelotCode.c_str()));
+        env->SetObjectArrayElement(result, 2, env->NewStringUTF(levelStr));
 
         env->ReleaseStringUTFChars(audioPath, nativeAudioPath);
+        env->ReleaseStringUTFChars(stringProfileType, profileTypeChars);
         return result;
+
     } catch (const std::exception& e) {
         cerr << "Error during Essentia analysis: " << e.what() << endl;
         env->ReleaseStringUTFChars(audioPath, nativeAudioPath);
+        env->ReleaseStringUTFChars(stringProfileType, profileTypeChars);
         return nullptr;
     }
 }

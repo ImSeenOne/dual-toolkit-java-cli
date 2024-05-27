@@ -5,8 +5,7 @@ public class DualApplication {
 
     static {
         try {
-            System.loadLibrary("Dual");
-            //logger.info("Library loaded successfully");
+            System.loadLibrary("Dual"); // Correct way to load the library
         } catch (UnsatisfiedLinkError e) {
             System.out.println("Failed to load library: " + e.getMessage());
             e.printStackTrace();
@@ -21,11 +20,11 @@ public class DualApplication {
         DualApplication analyzer = new DualApplication();
         analyzer.initEssentia();
         String profile = "edma";
-        String[] features = analyzer.analyzeAudio("westblaak.aiff", profile);
+        String[] features = analyzer.analyzeAudio("autonomous.aiff", profile);
         if (features != null) {
             System.out.println("BPM: " + features[0]);
-            System.out.println("Average Energy Level: " + features[1]);
-            System.out.println("Camelot Code: " + features[2]);
+            System.out.println("Camelot Code: " + features[1]);
+            System.out.println("Average Energy Level: " + features[2]);
         } else {
             System.out.println("Failed to analyze the audio.");
         }
