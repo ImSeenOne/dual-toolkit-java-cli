@@ -107,13 +107,10 @@
         </executions>
         <configuration>
           <mainClass>com.caveman.dual.DualApplication</mainClass>
-          <systemProperties>
-            <systemProperty>
-              <java.library.path>${project.basedir}/src/main/resources/lib</java.library.path>
-            </systemProperty>
-          </systemProperties>
           <arguments>
             <argument>-Djava.library.path=${project.basedir}/src/main/resources/lib</argument>
+            <argument>-cp</argument>
+            <argument>target/classes com.caveman.dual.DualApplication</argument>
           </arguments>
         </configuration>
       </plugin>

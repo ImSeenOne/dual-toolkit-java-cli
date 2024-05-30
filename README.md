@@ -2,14 +2,22 @@
 
 ## Project structure
 
-   ```
-   project-root/
+   ```bash
+   dual-sw/
    ├── src/
    │   ├── main/
+   │   │   ├── cpp/
+   │   │   │   ├── src/
+   │   │   │   │   ├── Dual.cpp
+   │   │   │   ├── compile.sh
    │   │   ├── java/
-   │   │   ├── resources/
-   │   │   └── native/
+   │   │   │   ├── com.caveman.dual
+   │   │   │   │   ├──DualApplication.java
+   │   │   ├── resources/ 
+   │   │   │   ├── lib/                 ### C++ compiled binaries destination folder
+   │   │   │   ├── logback.xml
    ├── pom.xml
+   ├── README.md
    ```
 
 ## Instalation instructions
